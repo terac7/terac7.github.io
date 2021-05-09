@@ -1,0 +1,33 @@
+---
+title: Project 3 Blog Post
+author: Carter Ferrell
+date: '2021-05-09'
+slug: project-3-blog-post
+categories: []
+tags:
+  - Data Science
+  - R
+  - Python
+  - Project 3
+description: 'The purpose of this blog post is to illustrate a basic understanding of python.'
+---
+
+```{R}
+library(reticulate)
+py_config()
+py_install("pandas")
+py_install("numpy")
+py_install("matplotlib")
+```
+
+
+```{python}
+
+age_in_years = 30
+type(age_in_years)
+
+print("hello world")
+print("This is a picture of an artery!")
+```
+
+![](/post/2021-05-09-project-3-blog-post_files/artery.PNG)

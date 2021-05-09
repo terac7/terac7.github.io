@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on Carter Ferrell</title>
-    <link>/post/</link>
-    <description>Recent content in Posts on Carter Ferrell</description>
+    <title>Python on Carter Ferrell</title>
+    <link>/tags/python/</link>
+    <description>Recent content in Python on Carter Ferrell</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Sun, 09 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 09 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/tags/python/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Project 3 Blog Post</title>
       <link>/post/2021/05/09/project-3-blog-post/</link>
@@ -14,16 +14,6 @@
       
       <guid>/post/2021/05/09/project-3-blog-post/</guid>
       <description> library(reticulate) py_config() ## python: /stor/home/cf25685/.local/share/r-miniconda/envs/r-reticulate/bin/python ## libpython: /stor/home/cf25685/.local/share/r-miniconda/envs/r-reticulate/lib/libpython3.6m.so ## pythonhome: /stor/home/cf25685/.local/share/r-miniconda/envs/r-reticulate:/stor/home/cf25685/.local/share/r-miniconda/envs/r-reticulate ## version: 3.6.13 | packaged by conda-forge | (default, Feb 19 2021, 05:36:01) [GCC 9.3.0] ## numpy: /stor/home/cf25685/.local/share/r-miniconda/envs/r-reticulate/lib/python3.6/site-packages/numpy ## numpy_version: 1.19.5 py_install(&amp;quot;pandas&amp;quot;) py_install(&amp;quot;numpy&amp;quot;) py_install(&amp;quot;matplotlib&amp;quot;)  age_in_years = 30 type(age_in_years) ## &amp;lt;class &amp;#39;int&amp;#39;&amp;gt; print(&amp;quot;hello world&amp;quot;) ## hello world print(&amp;quot;This is a picture of an artery!&amp;quot;) ## This is a picture of an artery! </description>
-    </item>
-    
-    <item>
-      <title>Test Post</title>
-      <link>/post/2021/05/09/test-post/</link>
-      <pubDate>Sun, 09 May 2021 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2021/05/09/test-post/</guid>
-      <description>Link to project 1
-Link to google</description>
     </item>
     
   </channel>
