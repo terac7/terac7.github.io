@@ -1,0 +1,17 @@
+---
+title: Test Post
+author: 'Carter '
+date: '2021-05-09'
+slug: test-post
+categories: []
+tags: []
+description: ''
+---
+[Link to project 1](/project/project1/)
+
+[Link to google](https://www.google.com)
+
+```{R}
+
+```
+![](/post/2021-05-09-test-post_files/Strep reverse.HEIC)

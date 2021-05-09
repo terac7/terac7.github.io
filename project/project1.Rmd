@@ -1,0 +1,133 @@
+---
+title: "Project 1: County Health and Voting Data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=F, warning = FALSE)
+```
+
+## Carter Ferrell cf25685
+
+```{R}
+library(tidyverse)
+library(cluster)
+library(ggplot2)
+library(dplyr)
+library(readxl)
+healthdata<-X2021_County_Health_Rankings_Texas_Data_v1 <- read_excel("2021 County Health Rankings Texas Data - v1.xlsx", 
+    sheet = "Outcomes & Factors Rankings", 
+    col_types = c("text", "text", "text", 
+        "text", "numeric", "text", "numeric"))
+votedata<-read.csv("countypres_2000-2016.csv")
+```
+
+##Introduction
+*The two data sets I have chosen are Texas county health data and county presidential election data from 2000 to 2016. The election data set contains data for all counties in the U.S. so I will have to narrow it down to just Texas counties. I acquired the health data from countyhealthrankings.org. The data set includes the variables: "county", "Health Outcomes", "Health Factors", and relative rankings for both of the health variables. The "Health Outcomes" were determined by how long people live and how healthy people feel while alive. The "Health Factors" are things that influence the overall health of a county (smoking, obesity, physical inactivity, etc.). I acquired the presidential election data set from the MIT Election Lab website. The data set includes the variables of interest: "county", "candidate", "candidatevotes","totalvotes", and "party". There are a whole host of other variables that I am uninterested in, so those will be removed. I am curious to see if there is any relationship between county party affiliation and overall health outcomes. I expect that rural, red (GOP) counties will have worse health outcomes. I also would not be surprised if there was not any kind of real relationship. These topics are interesting to me because I plan on pursuing medicine and I grew up in a largely conservative, unhealthy community.*
+
+
+## Question 1: Tidying: Rearranging Wide/Long
+```{R}
+tidyhealth<-healthdata %>% select(3,5,7) %>% 
+  rename(
+    Health_Outcome_Rank = ...5,
+    Health_Factor_Rank = ...7,
+    county = ...3
+    )
+tidyhealth<-tidyhealth[-c(1,2), ]
+
+tidyvote<-votedata %>% filter(year==2016) %>% filter(state=='Texas') %>% select(4,7,8,9,10)
+tidyvote<-tidyvote%>% select(-2) %>% pivot_wider(names_from = party, values_from=candidatevotes) 
+
+tidyvote<-tidyvote%>% rename(
+  Democrat_Clinton = democrat,
+  Republican_Trump = republican
+)
+
+```
+*In the above chunk of code I tidied up and reorganized both of the data sets. For the health ranking data I dropped the columns containing the z-scores and the the top two rows. The top two rows were (unnecessary) secondary headings. Then I renamed the column headings. For the election data I had to filter down to one year (I chose the 2016 election) and filter to just Texas counties. Then I dropped the unnecessary columns and pivoted wider to tidy up the data. The final data set just contains county names, total votes, and the number of votes for each candidate/party. I attempted to rename the "NA" column to "Third Party" but I kept getting error messages.*
+
+
+## Question 2: Joining
+```{R}
+joinedproject<-tidyhealth %>% inner_join(tidyvote, by="county")
+
+```
+*I used an inner join to join the two data sets. I chose to use the inner join because I did not want any NAs to be introduced. I do not believe that any of the rows were dropped. With the way I have tidied the data sets I think that any of the other joins would have worked just as well.*
+
+## Question 3: Wrangling
+```{R}
+zscore<-function(x) (x-mean(x, na.rm=T)) / sd(x, na.rm=T)
+joinedproject<-joinedproject %>% mutate(dem_vote_proportion=Democrat_Clinton/totalvotes) %>% mutate(rep_vote_proportion=Republican_Trump/totalvotes)
+joinedproject %>% summarise(mean(dem_vote_proportion))
+joinedproject %>% summarise(mean(rep_vote_proportion))
+joinedproject %>% group_by(Health_Outcome_Rank, Health_Factor_Rank) %>% summarise(dem_vote_proportion)
+joinedproject %>% group_by(Health_Outcome_Rank, Health_Factor_Rank) %>% summarise(rep_vote_proportion)
+joinedproject %>%group_by(Health_Outcome_Rank, Health_Factor_Rank) %>%summarize_if(is.numeric,sum,na.rm=T)
+joinedproject %>% filter(rep_vote_proportion>dem_vote_proportion)
+joinedproject %>% mutate_if(is.character, as.numeric) %>% arrange(Health_Outcome_Rank) %>% filter(rep_vote_proportion>dem_vote_proportion) %>% select(2,3,8,9)
+joinedproject %>% mutate_if(is.character, as.numeric) %>% arrange(Health_Outcome_Rank) %>% filter(rep_vote_proportion<dem_vote_proportion) %>% select(2,3,8,9)
+joinedproject<-joinedproject%>%mutate(winning_candidate = case_when(dem_vote_proportion>0.5 ~ "Clinton",                                            rep_vote_proportion>0.5 ~ "Trump"))
+joinedproject %>% summarise_if(is.numeric,mean)
+joinedproject %>% summarise_if(is.numeric,sd)
+joinedproject %>% summarise_if(is.numeric,zscore)
+joinedproject %>% summarise_if(is.numeric,var)
+joinedproject %>% summarise_if(is.numeric,sum)
+joinedproject %>%group_by(winning_candidate,Health_Outcome_Rank) %>% arrange(Health_Outcome_Rank)
+joinedproject %>% summarise(n_distinct(county))
+joinedproject %>%filter(winning_candidate=='Trump') %>% summarise(n())
+joinedproject %>%filter(winning_candidate=='Clinton') %>% summarise(n())
+joinedproject
+
+```
+*The relationship I expected to find between Health Outcome Rank and the winning candidate of a county was not there. Donald Trump received 4679528 of all Texas votes and Hillary Clinton received 3876705. The two healthiest counties (Collin and Williamson) both voted for Donald Trump. Donald Trump won 222 of the 253 counties represented in this data set, and he won the majority of the healthiest counties (7 of the top 10). Hillary Clinton won 26 of the counties represented in the data set.*
+
+## Question 4: Visualizing
+```{R}
+cormatproj <- joinedproject %>% select_if(is.numeric) %>% cor(use = "pair")
+cormatproj %>% as.data.frame %>% rownames_to_column("var1")
+
+tidycorproj<-cormatproj %>% as.data.frame %>% rownames_to_column("var1") %>% 
+  pivot_longer(-1,names_to="var2",values_to="correlation")
+
+tidycorproj %>% ggplot(aes(var1,var2, fill=correlation))+geom_tile()+
+  scale_fill_gradient2(low = "red",mid="white",high = "blue")+
+  geom_text(aes(label=round(correlation,2)),color = "black", size = 4)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  coord_fixed()
+
+joinedproject %>% ggplot(aes(county,Health_Outcome_Rank, color=winning_candidate)) + geom_point(stat="summary")+facet_wrap(~winning_candidate)+
+  theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())+
+   scale_y_continuous(breaks = scales::pretty_breaks(n = 10))+
+  ggtitle("2016 Presidential Election Results and Texas County Overall Health Rankings")
+
+joinedproject %>% ggplot(aes(county,Health_Factor_Rank, color=winning_candidate)) + geom_point(stat="summary")+facet_wrap(~winning_candidate)+
+  theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())+
+   scale_y_continuous(breaks = scales::pretty_breaks(n = 10))+
+  ggtitle("2016 Presidential Election Results and Texas County Health Factor Rankings")
+
+```
+
+*I decided to visualize the data as scatter plots because it was the easiest on the eyes. I removed the county names from the x-axis because regardless of the manipulations I attempted they were illegible. The y-axis shows the health outcome rank of the county's and as such, the lower the score the healthier the county. As shown in the graphs there is not much of a correlation between county election results and the overall health of the county.*
+
+## Question 5: PCA
+```{R}
+proj_nums <-  joinedproject %>%  select_if(is.numeric)
+rownames(proj_nums) <-  joinedproject$county
+proj_nums<-na.omit(proj_nums)
+proj_pca <-  princomp(proj_nums)
+summary(proj_pca, loadings=T)
+eigvalproj <-  proj_pca$sdev^2
+varpropproj=round(eigvalproj/sum(eigvalproj), 2)
+ggplot() + geom_bar(aes(y=varpropproj, x=1:8), stat="identity") + xlab("") + geom_path(aes(y=varpropproj, x=1:8)) + 
+  geom_text(aes(x=1:8, y=varpropproj, label=round(varpropproj, 2)), vjust=1, col="white", size=5) + 
+  scale_y_continuous(breaks=seq(0, .6, .2), labels = scales::percent) + 
+  scale_x_continuous(breaks=1:10)
+projdf <-  data.frame(PC1=proj_pca$scores[, 1], PC2=proj_pca$scores[, 2])
+ggplot(projdf, aes(PC1, PC2)) + geom_point()
+ 
+```
+
+
+
+*I chose to perform PCA on my data set. I selected all of the numeric variables and dropped the rows containing NAs because they were causing an error. Then I performed principal component analysis using "princomp". Next, I converted the standard deviations to eigenvalues and calculated the amount of variation explained by each of my principal components. Finally, I visualized the proportion of variance explained by each of the principal components with a bar plot. The plot makes it clear that all of the variation is due to the first two principal components.a*

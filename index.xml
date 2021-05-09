@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Carter Ferrell</title>
+    <link>/</link>
+    <description>Recent content on Carter Ferrell</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Sun, 09 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Test Post</title>
+      <link>/post/2021/05/09/test-post/</link>
+      <pubDate>Sun, 09 May 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021/05/09/test-post/</guid>
+      <description>Link to project 1
+Link to google</description>
+    </item>
+    
+    <item>
+      <title>Hello R Markdown</title>
+      <link>/post/2015/07/23/hello-r-markdown/</link>
+      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
+      
+      <guid>/post/2015/07/23/hello-r-markdown/</guid>
+      <description>R Markdown This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+You can embed an R code chunk like this:
+summary(cars) ## speed dist ## Min. : 4.0 Min. : 2.00 ## 1st Qu.:12.0 1st Qu.: 26.00 ## Median :15.0 Median : 36.00 ## Mean :15.4 Mean : 42.98 ## 3rd Qu.</description>
+    </item>
+    
+    <item>
+      <title>Age and Traumatic Brain Injuries (TBI)</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Carter Ferrell cf25685  Introduction tbi_age &amp;lt;- readr::read_csv(&amp;#39;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_age.csv&amp;#39;) glimpse(tbi_age) ## Rows: 231 ## Columns: 5 ## $ age_group &amp;lt;chr&amp;gt; &amp;quot;0-17&amp;quot;, &amp;quot;0-17&amp;quot;, &amp;quot;0-17&amp;quot;, &amp;quot;0-17&amp;quot;, &amp;quot;0-17&amp;quot;, &amp;quot;0-17&amp;quot;, &amp;quot;0-17&amp;quot;, &amp;quot;0-4&amp;quot;, &amp;quot;0-4&amp;quot;, &amp;quot;0… ## $ type &amp;lt;chr&amp;gt; &amp;quot;Emergency Department Visit&amp;quot;, &amp;quot;Emergency Department Visit&amp;quot;, &amp;quot;Emergency D… ## $ injury_mechanism &amp;lt;chr&amp;gt; &amp;quot;Motor Vehicle Crashes&amp;quot;, &amp;quot;Unintentional Falls&amp;quot;, &amp;quot;Unintentionally struck … ## $ number_est &amp;lt;dbl&amp;gt; 47138, 397190, 229236, 55785, NA, 24360, 57983, 5464, 230776, 53436, 120… ## $ rate_est &amp;lt;dbl&amp;gt; 64.</description>
+    </item>
+    
+    <item>
+      <title>Project 1: County Health and Voting Data</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Carter Ferrell cf25685 library(tidyverse) library(cluster) library(ggplot2) library(dplyr) library(readxl) healthdata&amp;lt;-X2021_County_Health_Rankings_Texas_Data_v1 &amp;lt;- read_excel(&amp;quot;2021 County Health Rankings Texas Data - v1.xlsx&amp;quot;, sheet = &amp;quot;Outcomes &amp;amp; Factors Rankings&amp;quot;, col_types = c(&amp;quot;text&amp;quot;, &amp;quot;text&amp;quot;, &amp;quot;text&amp;quot;, &amp;quot;text&amp;quot;, &amp;quot;numeric&amp;quot;, &amp;quot;text&amp;quot;, &amp;quot;numeric&amp;quot;)) votedata&amp;lt;-read.csv(&amp;quot;countypres_2000-2016.csv&amp;quot;) ##Introduction The two data sets I have chosen are Texas county health data and county presidential election data from 2000 to 2016. The election data set contains data for all counties in the U.S. so I will have to narrow it down to just Texas counties.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/</guid>
+      <description> Check out some of my coding projects below:
+ Wrangling &amp;amp; Exploratory Data Analysis
+ Modeling, Inference, Prediction
+  -- </description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>    </description>
+    </item>
+    
+  </channel>
+</rss>

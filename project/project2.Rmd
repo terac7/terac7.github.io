@@ -1,0 +1,234 @@
+---
+title: "Age and Traumatic Brain Injuries (TBI)"
+author: "Carter Ferrell"
+date: "5/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+library(ggplot2)
+
+class_diag <- function(probs,truth){ 
+  #CONFUSION MATRIX: CALCULATE ACCURACY, TPR, TNR, PPV 
+  if(is.character(truth)==TRUE) truth<-as.factor(truth) 
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1 
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),factor(truth, levels=c(0,1))) 
+  acc=sum(diag(tab))/sum(tab) 
+  sens=tab[2,2]/colSums(tab)[2] 
+  spec=tab[1,1]/colSums(tab)[1] 
+  ppv=tab[2,2]/rowSums(tab)[2] 
+  
+#CALCULATE EXACT AUC 
+  ord<-order(probs, decreasing=TRUE) 
+  probs <- probs[ord]; truth <- truth[ord] 
+  TPR=cumsum(truth)/max(1,sum(truth))  
+  FPR=cumsum(!truth)/max(1,sum(!truth)) 
+  dup <-c(probs[-1]>=probs[-length(probs)], FALSE) 
+  TPR <-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1) 
+  n <- length(TPR) 
+  auc <- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n])) 
+  data.frame(acc,sens,spec,ppv,auc) 
+}
+```
+
+## Carter Ferrell cf25685
+
+
+## Introduction
+```{R}
+tbi_age <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_age.csv')
+glimpse(tbi_age)
+tidy_age<-na.omit(tbi_age)
+
+```
+
+*The data set that I selected for this project contains information on traumatic brain injuries (TBI). It was originally sourced from the CDC Traumatic Brain Injury Report. The tbi_age data set contains the following variables: age_group, type, injury_mechanism, number_est, and rate_est. The age_group variable is self explanatory, it is a categorical variable that splits the patients into discrete age ranges (0-4, 0-17,15-24, etc.). The type variable is another categorical variable that contains the type of measure. In other words, where the patient ended up getting treatment/diagnosis (emergency room, hospitalization, and death). The injury_mechanism variable contatins data on the event that caused the TBI, such as motor vehicle crash, self harm, falls, and assault. The number_est variable is a numeric variable that contains the estimated number of observed cases in 2014. Finally, the rate_est variable is the estimated rate per 100,000 people in 2014. There are 5 total variables and 231 observations. I think it will be quite interesting to see which age ranges have the highest rates of TBIs, and the outcomes that different age rages see with the same types of injuries. I expect the adolescent age ranges (0-17 and 15-24) to have the highest rates of various TBIs, while expect the geriatric age ranges to have the highest incidents of death from TBIs.*
+
+
+## Question 1: MANOVA
+```{R}
+library(rstatix)
+ggplot(tidy_age, aes(x = number_est, y = rate_est)) +  geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~age_group)
+
+
+man1 <- manova(cbind(number_est,rate_est)~age_group, data=tidy_age)
+summary(man1)
+summary.aov(man1)
+tidy_age%>%group_by(age_group)%>%summarize(mean(number_est))
+pairwise.t.test(tidy_age$number_est,tidy_age$age_group, p.adj="none")
+
+```
+
+*In the above code chunk I performed a Multivariate Analysis of Variance (MANOVA) test to determine the effect of age range on the two numeric, response variables (number estimate and rate estimate). The MANOVA assumptions are very likely violated. Since the overall MANOVA was significant I performed a univariate ANOVA test and found a significant difference in number_est across different age_groups. Post hoc analysis was performed using a pairwise t-test to determine which age groups significantly differed in estimated number of TBI cases. I performed 1 MANOVA, 2 ANOVAs,and 11 t-tests. Therefore, the bonferroni adjustment for the alpha would be: .05/11 = 0.0045. The results suggest that there is only a significant difference between the total number of TBIs and each individual age group. This makes sense because the total would be significantly higher than any single age group. I attempted running the above code without the total TBI rows included and found the results to be even less significant.* 
+
+
+## Question 2: Mean Difference
+```{R}
+tidy_age%>%group_by(type)%>%
+  summarize(means=mean(number_est))%>%summarize(`mean_diff`=diff(means))
+
+rand_dist<-vector()
+for(i in 1:5000){
+  new<-data.frame(number=sample(tidy_age$number_est),type=tidy_age$type)      
+  rand_dist[i]<-mean(new[new$type=="Deaths",]$number)-
+    mean(new[new$type=="Hospitalizations",]$number)
+   mean(new[new$type=="ER",]$number)
+   }
+
+{hist(rand_dist,main="",ylab=""); abline(v = c(-73510.08, 80053.90),col="red")}
+
+mean(rand_dist>80053.9| rand_dist< -73510.08)
+
+ggplot(tidy_age,aes(number_est,fill=type))+geom_histogram(bins=15)+  facet_wrap(~type,ncol=2)+theme(legend.position="none")
+```
+
+*In the above code chunk I decided to perform a randomization test on the mean difference test statistic. Specifically, I decided to perform the test on the categorical variable type (death, hospitalization, and emergency room visit) and the numeric variable number_estimate. The null hypothesis is that the mean estimated number of TBIs is the same across the various outcome types. The alternative hypothesis is that the mean estimated number of TBIs is significantly different across the various outcome types. *
+
+## Question 3: Linear Regression
+
+```{R}
+library(lmtest)
+library(sandwich)
+tidy_age<-tidy_age %>% mutate(number_c=tidy_age$number_est-mean(tidy_age$number_est))
+tidy_age<-tidy_age %>% mutate(rate_c=tidy_age$rate_est-mean(tidy_age$rate_est))           
+           
+fit<-lm(rate_c ~number_c*age_group, data=tidy_age)
+
+summary(fit)
+coeftest(fit, vcov=vcovHC(fit))#[,1:2]
+ggplot(tidy_age, aes(y=number_est,x=rate_est, color = age_group)) + 
+  geom_smooth(method = "lm", se = F, fullrange = T,aes(color=age_group))+ geom_point()+geom_vline(xintercept=0,lty=2)+geom_vline(xintercept=mean(tidy_age$number_est))
+
+resids<-fit$residuals; fitvals<-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, col="red")
+
+ggplot()+geom_histogram(aes(resids), bins=20)
+ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids))
+
+
+
+```
+*I mean centered the numeric variables number_est and rate_est. Then I built a linear regression predicting the estimated rate of TBIs per 100,000 individuals (rate_est) from the interaction of the number_est and age_group variables. The intercept coefficient tells us that the predicted rate of TBIs is less than 0 (-10.25) when the other predictors are set to 0. The 0-4 and 75+ age groups have the largest, positive coefficient estimates (109.99 and 110.37), which means that they have an increased rate of TBIs compared to the reference group (0-17 year-olds). The coefficient estimates that include the interaction of estimated number of TBIs and age groups are significantly lower than the estimates without interaction. I graphically checked the assumptions of linearity, normality, and homoskedasticity. To my understanding it seems to fail all of these assumptions. This model gave us an R-squared value of 1, which means that 100% of variability in the estimated rate of TBIs per 100,000 people is explained by this model. After computing the regression results using robust SEs I do not see any significant changes in results.*
+
+
+## Question 4: Linear Regression + Bootstrapping
+```{R}
+samp_distn<-replicate(5000, {
+  boot_dat<-boot_dat<-tidy_age[sample(nrow(tidy_age),replace=TRUE),]  
+  fit<-lm(rate_c~number_c*age_group, data=tidy_age)  
+  coef(fit) 
+  })
+
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+samp_distn%>%t%>%as.data.frame%>%gather%>%group_by(key)%>% summarize(lower=quantile(value,.025), upper=quantile(value,.975))
+
+fit<-lm(rate_c~number_c*age_group, data=tidy_age)
+resids<-fit$residuals  
+fitted<-fit$fitted.values
+resid_resamp<-replicate(5000,{ 
+  new_resids<-sample(resids,replace=TRUE)    
+  newdat<-tidy_age    
+  newdat$new_y <- fitted+new_resids   
+  fit<-lm(new_y ~ number_c*age_group, data=newdat)    
+  coef(fit)
+  })
+resid_resamp%>%t%>%as.data.frame%>%summarize_all(sd)
+resid_resamp%>%t%>%as.data.frame%>%gather%>%group_by(key)%>% summarize(lower=quantile(value,.025), upper=quantile(value,.975))
+```
+*In the code chunk above I reran the previously built linear regression, but this time with bootstrapped standard errors. Initially I decided to just re-sample the observations, but that resulted in estimated standard errors of 0 across the board. I am still not sure how to interpret this but I figured I would leave it in because it is interesting. Since re-sampling the observations did not work I decided to re-sample the residuals. This generated better results.  *
+
+## Question 5: Logistic Regression with Binary Variable
+```{R}
+data<-tidy_age%>%mutate(y=ifelse(type=="Deaths",1,0)) 
+fit<-glm(y~age_group+injury_mechanism, data=data, family="binomial")
+exp(coef(fit))%>%round(3)
+
+prob<-predict(fit, type="response")
+class_diag(prob, data$y)
+
+data$logit<-predict(fit,type="link")
+data%>%ggplot()+geom_density(aes(logit,color=type,fill=type), alpha=.4)+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab("predictor (logit)")
+
+library(plotROC)
+ROCplot<-ggplot(data)+geom_roc(aes(d=y,m=prob), n.cuts=0) 
+ROCplot
+calc_auc(ROCplot)
+
+
+table(predict=as.numeric(prob>.5),truth=data$y)%>%addmargins
+```
+
+*I decided to turn the type variable into a binary variable. The binary variable describes weather a TBI resulted in a death (1) or not (0). The predictor variables I used are age_group and injury_mechanism. I am curious to see if their mechanism of injury and age groups can predict if a TBI results in death of the individual. The accuracy, sensitivity, specificity, and AUC are: 0.664, 0, 1, and 0.51, respectively. This means that the model correctly classified 66.4% of the cases (accuracy). The specificity of 1 means that the model correctly classified 100% of all of the non-death causing TBIs. A sensitivity of 0 means that the model had a 0% true positive rate. An AUC of 0.51 is not very impressive. Our model is performing pretty poorly. *
+
+## Question 6: Pentultimate Logistic Regression
+```{R}
+data2<-data %>% select(-2,-4,-5,-9)
+
+fit2<-glm(y~. , data=data2,family="binomial")
+prob2<-predict(fit2, type="response")
+table(predict=as.numeric(prob2>.99))%>%addmargins
+class_diag(prob2, data2$y)
+
+k=10
+data3<-data2[sample(nrow(data2)),] #put dataset in random order
+folds<-cut(seq(1:nrow(data2)),breaks=k,labels=F) #create folds
+
+diags<-NULL
+for(i in 1:k){          # FOR EACH OF 10 FOLDS
+  train<-data3[folds!=i,] # CREATE TRAINING SET
+  test<-data3[folds==i,]  # CREATE TESTING SET
+  
+  truth<-test$y
+  
+  fit<- glm(y~., data=train, family="binomial")
+  probs<- predict(fit, newdata=test, type="response")
+  
+  diags<-rbind(diags,class_diag(probs,truth)) #CV DIAGNOSTICS FOR EACH FOLD
+}
+
+summarize_all(diags,mean) #AVERAGE THE DIAGNOSTICS ACROSS THE 10 FOLDS
+
+library(glmnet)
+x<-model.matrix(y~ ., data=data2)
+y<-as.matrix(data2$y)
+cv<-cv.glmnet(x,y,family="binomial")
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+lasso_dat <- data2 %>% mutate(Fall= ifelse(injury_mechanism=="Unintentional Falls", 1, 0))%>%
+select(number_c,rate_c,Fall,y)
+
+lass<-lasso_dat[sample(nrow(lasso_dat)),] #put dataset in random order
+folds<-cut(seq(1:nrow(lasso_dat)),breaks=k,labels=F) #create folds
+
+diags<-NULL
+for(i in 1:k){          # FOR EACH OF 10 FOLDS
+  train<-lass[folds!=i,] # CREATE TRAINING SET
+  test<-lass[folds==i,]  # CREATE TESTING SET
+  truth<-test$y
+  fit<- glm(y~., data=train, family="binomial")
+  probs<- predict(fit, newdata=test, type="response")
+  
+  diags<-rbind(diags,class_diag(probs,truth)) #CV DIAGNOSTICS FOR EACH FOLD
+}
+summarize_all(diags,mean)
+
+```
+
+*I created a data-set containing only the variables of interest for this logistic regression. I took out the logit, probabilities, and the non-centered numeric variables. The AUC for this model (0.908) is quite a bit higher than the AUC of the last one. Actually, all of the in-sample classification diagnostics increased! This model is predicting better than the last one. Next, I performed a 10-fold CV with the same model to see what the out of sample classification diagnostics looked like. There were decreases in each of the classification diagnostics. The AUC went down from 0.908 to 0.849, so we are seeing some over-fitting. Thus, the model is performing slightly worse out of sample. Next, I performed LASSO on the same set of variables and it selected the unintentional falls injury mechanism and our two numeric variables (centered rate and number estimate). After performing the LASSO regularization and the subsequent 10-fold CV, the model slightly improved. The AUC and other out-of-sample classification diagnostics increased.   *
